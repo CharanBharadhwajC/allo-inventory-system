@@ -3,9 +3,11 @@ import { NextResponse } from "next/server"
 
 export async function GET() {
 
-  await releaseExpiredReservations()
+  const released =
+    await releaseExpiredReservations()
 
   return NextResponse.json({
-    success: true
+    success: true,
+    released
   })
 }

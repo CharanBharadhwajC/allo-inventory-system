@@ -27,11 +27,19 @@ export default function ProductCard({
     const data = await res.json()
 
     if (!res.ok) {
-      alert(data.error)
+
+      if (res.status === 409) {
+        alert("Not enough stock")
+        return
+      }
+
+      alert(data.error || "Something went wrong")
       return
     }
 
-    router.push(`/reservation/${data.id}`)
+    router.push(
+      `/reservation/${data.id}`
+    )
   }
 
   return (
@@ -93,12 +101,9 @@ export default function ProductCard({
 
         <button
           onClick={reserve}
-          disabled={item.available <= 0}
-          className="w-full mt-2 bg-slate-900 hover:bg-slate-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition text-white px-5 py-3 rounded-xl font-medium"
+          className="w-full mt-2 bg-slate-900 hover:bg-slate-700 transition text-white px-5 py-3 rounded-xl font-medium"
         >
-          {item.available <= 0
-            ? "Out of Stock"
-            : "Reserve"}
+          Reserve
         </button>
 
       </div>

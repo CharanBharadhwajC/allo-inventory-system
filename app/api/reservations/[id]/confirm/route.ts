@@ -51,6 +51,45 @@ export async function POST(
     isExpired(reservation.expiresAt)
   ) {
 
+    await prisma.$transaction(
+      async (tx) => {
+
+        const inventory =
+          await tx.inventory.findFirst({
+            where: {
+              productId:
+                reservation.productId,
+              warehouseId:
+                reservation.warehouseId
+            }
+          })
+
+        if (inventory) {
+
+          await tx.inventory.update({
+            where: {
+              id: inventory.id
+            },
+            data: {
+              reservedQuantity: {
+                decrement:
+                  reservation.quantity
+              }
+            }
+          })
+        }
+
+        await tx.reservation.update({
+          where: {
+            id: reservation.id
+          },
+          data: {
+            status: "EXPIRED"
+          }
+        })
+      }
+    )
+
     return NextResponse.json(
       {
         error:
