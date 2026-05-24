@@ -51,35 +51,6 @@ export async function POST(
     isExpired(reservation.expiresAt)
   ) {
 
-    await prisma.$transaction(
-      async (tx) => {
-
-        await tx.inventory.updateMany({
-          where: {
-            productId:
-              reservation.productId,
-            warehouseId:
-              reservation.warehouseId
-          },
-          data: {
-            reservedQuantity: {
-              decrement:
-                reservation.quantity
-            }
-          }
-        })
-
-        await tx.reservation.update({
-          where: {
-            id: reservation.id
-          },
-          data: {
-            status: "EXPIRED"
-          }
-        })
-      }
-    )
-
     return NextResponse.json(
       {
         error:
@@ -94,40 +65,47 @@ export async function POST(
   await prisma.$transaction(
     async (tx) => {
 
-      const updated =
-        await tx.reservation.updateMany({
+      const inventory =
+        await tx.inventory.findFirst({
           where: {
-            id: reservation.id,
-            status: "PENDING"
-          },
-          data: {
-            status: "CONFIRMED",
-            confirmedAt: new Date()
+            productId:
+              reservation.productId,
+            warehouseId:
+              reservation.warehouseId
           }
         })
 
-      if (updated.count === 0) {
+      if (!inventory) {
         throw new Error(
-          "RESERVATION_ALREADY_PROCESSED"
+          "INVENTORY_NOT_FOUND"
         )
       }
 
-      await tx.inventory.updateMany({
+      await tx.inventory.update({
         where: {
-          productId:
-            reservation.productId,
-          warehouseId:
-            reservation.warehouseId
+          id: inventory.id
         },
         data: {
+
           totalQuantity: {
             decrement:
               reservation.quantity
           },
+
           reservedQuantity: {
             decrement:
               reservation.quantity
           }
+        }
+      })
+
+      await tx.reservation.update({
+        where: {
+          id: reservation.id
+        },
+        data: {
+          status: "CONFIRMED",
+          confirmedAt: new Date()
         }
       })
     }

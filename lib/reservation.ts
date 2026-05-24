@@ -10,12 +10,14 @@ export async function createReservation(
   return prisma.$transaction(async (tx) => {
 
     const inventoryRows =
-      await tx.$queryRawUnsafe<any[]>(`
+      await tx.$queryRawUnsafe<any[]>((
+        `
         SELECT * FROM "Inventory"
         WHERE "productId" = $1
         AND "warehouseId" = $2
         FOR UPDATE
-      `,
+        `
+      ),
       productId,
       warehouseId
     )
