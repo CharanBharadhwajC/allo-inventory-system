@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import Countdown from "@/components/countdown"
 import { prisma } from "@/lib/prisma"
 
