@@ -14,11 +14,23 @@ async function getProducts() {
     })
 
   return inventories.map((item) => ({
+
     inventoryId: item.id,
+
     productId: item.productId,
+
     warehouseId: item.warehouseId,
+
     product: item.product.name,
+
     warehouse: item.warehouse.name,
+
+    totalQuantity:
+      item.totalQuantity,
+
+    reservedQuantity:
+      item.reservedQuantity,
+
     available:
       item.totalQuantity -
       item.reservedQuantity
@@ -47,10 +59,12 @@ export default async function HomePage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
         {products.map((item: any) => (
+
           <ProductCard
             key={item.inventoryId}
             item={item}
           />
+
         ))}
 
       </div>

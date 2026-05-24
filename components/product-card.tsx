@@ -37,35 +37,68 @@ export default function ProductCard({
   return (
     <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 transition hover:shadow-md">
 
-      <div className="space-y-3">
+      <div className="space-y-4">
 
-        <h2 className="text-2xl font-bold text-slate-900">
-          {item.product}
-        </h2>
+        <div className="space-y-1">
 
-        <div className="space-y-1 text-slate-600">
+          <h2 className="text-2xl font-bold text-slate-900">
+            {item.product}
+          </h2>
 
-          <p>
-            Warehouse:
-            <span className="font-medium text-slate-800 ml-2">
-              {item.warehouse}
-            </span>
+          <p className="text-slate-500">
+            {item.warehouse}
           </p>
 
-          <p>
-            Available Stock:
-            <span className="font-semibold text-emerald-600 ml-2">
+        </div>
+
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2 text-sm">
+
+          <div className="flex items-center justify-between">
+
+            <span className="text-slate-600">
+              In Stock
+            </span>
+
+            <span className="font-semibold text-slate-900">
+              {item.totalQuantity}
+            </span>
+
+          </div>
+
+          <div className="flex items-center justify-between">
+
+            <span className="text-slate-600">
+              Reserved
+            </span>
+
+            <span className="font-semibold text-amber-600">
+              {item.reservedQuantity}
+            </span>
+
+          </div>
+
+          <div className="border-t border-slate-200 pt-2 flex items-center justify-between">
+
+            <span className="text-slate-700 font-medium">
+              Available to Purchase
+            </span>
+
+            <span className="font-bold text-emerald-600 text-base">
               {item.available}
             </span>
-          </p>
+
+          </div>
 
         </div>
 
         <button
           onClick={reserve}
-          className="mt-4 bg-slate-900 hover:bg-slate-700 transition text-white px-5 py-2.5 rounded-xl font-medium"
+          disabled={item.available <= 0}
+          className="w-full mt-2 bg-slate-900 hover:bg-slate-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition text-white px-5 py-3 rounded-xl font-medium"
         >
-          Reserve
+          {item.available <= 0
+            ? "Out of Stock"
+            : "Reserve"}
         </button>
 
       </div>
