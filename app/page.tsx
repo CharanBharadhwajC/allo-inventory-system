@@ -1,15 +1,26 @@
 import ProductCard from "@/components/product-card"
+import { prisma } from "@/lib/prisma"
 
 async function getProducts() {
 
-  const res = await fetch(
-    "http://localhost:3000/api/products",
-    {
-      cache: "no-store"
-    }
-  )
+  const inventories =
+    await prisma.inventory.findMany({
+      include: {
+        product: true,
+        warehouse: true
+      }
+    })
 
-  return res.json()
+  return inventories.map((item) => ({
+    inventoryId: item.id,
+    productId: item.productId,
+    warehouseId: item.warehouseId,
+    product: item.product.name,
+    warehouse: item.warehouse.name,
+    available:
+      item.totalQuantity -
+      item.reservedQuantity
+  }))
 }
 
 export default async function HomePage() {
