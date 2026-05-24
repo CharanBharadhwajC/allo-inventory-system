@@ -58,7 +58,7 @@ export async function createReservation(
           status: "PENDING",
           expiresAt: addMinutes(
             new Date(),
-            10
+            1
           )
         }
       })
