@@ -21,6 +21,7 @@ export async function POST(
     })
 
   if (!reservation) {
+
     return NextResponse.json(
       {
         error: "Reservation not found"
@@ -31,10 +32,58 @@ export async function POST(
     )
   }
 
-  if (isExpired(reservation.expiresAt)) {
+  if (
+    reservation.status !== "PENDING"
+  ) {
+
     return NextResponse.json(
       {
-        error: "Reservation expired"
+        error:
+          "Reservation is no longer active"
+      },
+      {
+        status: 409
+      }
+    )
+  }
+
+  if (
+    isExpired(reservation.expiresAt)
+  ) {
+
+    await prisma.$transaction(
+      async (tx) => {
+
+        await tx.inventory.updateMany({
+          where: {
+            productId:
+              reservation.productId,
+            warehouseId:
+              reservation.warehouseId
+          },
+          data: {
+            reservedQuantity: {
+              decrement:
+                reservation.quantity
+            }
+          }
+        })
+
+        await tx.reservation.update({
+          where: {
+            id: reservation.id
+          },
+          data: {
+            status: "EXPIRED"
+          }
+        })
+      }
+    )
+
+    return NextResponse.json(
+      {
+        error:
+          "Reservation expired"
       },
       {
         status: 410
@@ -42,33 +91,47 @@ export async function POST(
     )
   }
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(
+    async (tx) => {
 
-    await tx.inventory.updateMany({
-      where: {
-        productId: reservation.productId,
-        warehouseId: reservation.warehouseId
-      },
-      data: {
-        totalQuantity: {
-          decrement: reservation.quantity
+      const updated =
+        await tx.reservation.updateMany({
+          where: {
+            id: reservation.id,
+            status: "PENDING"
+          },
+          data: {
+            status: "CONFIRMED",
+            confirmedAt: new Date()
+          }
+        })
+
+      if (updated.count === 0) {
+        throw new Error(
+          "RESERVATION_ALREADY_PROCESSED"
+        )
+      }
+
+      await tx.inventory.updateMany({
+        where: {
+          productId:
+            reservation.productId,
+          warehouseId:
+            reservation.warehouseId
         },
-        reservedQuantity: {
-          decrement: reservation.quantity
+        data: {
+          totalQuantity: {
+            decrement:
+              reservation.quantity
+          },
+          reservedQuantity: {
+            decrement:
+              reservation.quantity
+          }
         }
-      }
-    })
-
-    await tx.reservation.update({
-      where: {
-        id: reservation.id
-      },
-      data: {
-        status: "CONFIRMED",
-        confirmedAt: new Date()
-      }
-    })
-  })
+      })
+    }
+  )
 
   return NextResponse.json({
     success: true
