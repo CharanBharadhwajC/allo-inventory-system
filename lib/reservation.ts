@@ -1,5 +1,5 @@
 import { prisma } from "./prisma"
-import { addSeconds } from "date-fns"
+import { addMinutes } from "date-fns"
 
 export async function createReservation(
   productId: string,
@@ -9,12 +9,12 @@ export async function createReservation(
 
   return prisma.$transaction(async (tx) => {
 
-    const inventoryRows = await tx.$queryRawUnsafe<any[]>(
-      `
-      SELECT * FROM "Inventory"
-      WHERE "productId" = $1
-      AND "warehouseId" = $2
-      FOR UPDATE
+    const inventoryRows =
+      await tx.$queryRawUnsafe<any[]>(`
+        SELECT * FROM "Inventory"
+        WHERE "productId" = $1
+        AND "warehouseId" = $2
+        FOR UPDATE
       `,
       productId,
       warehouseId
@@ -23,7 +23,9 @@ export async function createReservation(
     const inventory = inventoryRows[0]
 
     if (!inventory) {
-      throw new Error("INVENTORY_NOT_FOUND")
+      throw new Error(
+        "INVENTORY_NOT_FOUND"
+      )
     }
 
     const available =
@@ -31,7 +33,9 @@ export async function createReservation(
       inventory.reservedQuantity
 
     if (available < quantity) {
-      throw new Error("INSUFFICIENT_STOCK")
+      throw new Error(
+        "INSUFFICIENT_STOCK"
+      )
     }
 
     await tx.inventory.update({
@@ -45,15 +49,19 @@ export async function createReservation(
       }
     })
 
-    const reservation = await tx.reservation.create({
-      data: {
-        productId,
-        warehouseId,
-        quantity,
-        status: "PENDING",
-        expiresAt: addSeconds(new Date(), 60)
-      }
-    })
+    const reservation =
+      await tx.reservation.create({
+        data: {
+          productId,
+          warehouseId,
+          quantity,
+          status: "PENDING",
+          expiresAt: addMinutes(
+            new Date(),
+            10
+          )
+        }
+      })
 
     return reservation
   })
